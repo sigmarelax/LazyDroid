@@ -15,7 +15,7 @@ AAPT="aapt"
 KEYSTORE="keystore.key"
 KEYALIAS="danito"
 
-MYSHELL="gnome-terminal"
+MYSHELL="xfce4-terminal"
 #######################
 
 RED='\033[0;31m'
@@ -120,6 +120,7 @@ function set_something {
     NEW_APK=${APK_PATH}/${APK_DIR}_signed.apk
 
     echo "- Unpacking $APK_FULL_PATH ... "
+    ${APKTOOL} empty-framework-dir --force
     $APKTOOL d $APK_FULL_PATH -o ${APK_DIR} > /dev/null
     if [ $? -eq "0" ]
     then
@@ -555,6 +556,7 @@ function frida_lib {
 
         echo -n "---> Unpacking ${APK}... "
         APK_DIR=$(sed 's/.apk//I' <<< $APK)
+	${APKTOOL} empty-framework-dir --force
         ${APKTOOL} d -f ${APK} -o ${APK_DIR}> /dev/null
         echo "---> DONE"
 
@@ -644,6 +646,19 @@ EOF
     esac
 }
 
+function remove_ads {
+    echo -n "- Enter app folder to remove ads from: "
+    read APK_DIR
+
+    find ${APK_DIR} -name ads -type d -exec rm -rf {} \; -or -name ad -type d -exec rm -rf {} \;
+    find ${APK_DIR} -name adsdk -type d -exec rm -rf {} \; -or -name inmobi -type d -exec rm -rf {} \; -or -name lifestreet -type d -exec rm -rf {} \; -or -name millenialmedia -type d -exec rm -rf {} \;
+    find ${APK_DIR} -name mocoplex -type d -exec rm -rf {} \; -or -name mopub -type d -exec rm -rf {} \; -or -name smaato -type d -exec rm -rf {} \; -or -name tapit -type d -exec rm -rf {} \;
+    echo "Removed ad folders from ${APK_DIR}, apk can now be built from the main menu."
+
+    echo -n "\nPress Enter to continue..."
+    read kk
+}
+
 function menu {
     echo -e "LazyDroid ${VERSION} by Dani Martinez @dan1t0 - NCC Group\n\n"
     echo "Select an option: "
@@ -652,12 +667,13 @@ function menu {
     echo " 3) Sign apk"
     echo " 4) Build apk"
     echo " 5) Extract app log from Android device"
-    echo " 6) Extract apk file to an installed application from Market"
+    echo " 6) Extract apk file of an application installed from the Play Store"
     echo " 7) Download installed application data snapshot, /sdcard/ or mobile folder"
     echo " 8) Compare two different snapshots"
-    echo -e " 9) Insert Frida gadget in the APK\n"
+    echo " 9) Insert Frida gadget in the APK"
+    echo -e " 10) Remove ad folders from app directory\n"
     echo -e " 0) Exit\n"
-    echo -n "Select one option [1 - 9] "
+    echo -n "Select one option [1 - 10] "
     read option
     echo
     case $option in
@@ -679,6 +695,8 @@ function menu {
             compare;;
         9) echo "Option 9 selected";
             frida_lib;;
+	10) echo "Option 10 selected";
+	    remove_ads;;
         0) echo "See you soon!! :)";
             exit 1;;
         *) echo -n "Invalid option, press Enter to continue... ";
